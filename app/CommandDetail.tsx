@@ -5,7 +5,8 @@ import MapView, { Marker } from "react-native-maps";
 
 const CommandDetailScreen = () => {
   const route = useRoute(); // This will give you access to the route params
-  const { id, message, location, pilot_id, status, created_at } = route.params;
+  const { id, message, location, pilot_id, status, created_at } =
+    route.params as any;
 
   return (
     <View style={styles.container}>
