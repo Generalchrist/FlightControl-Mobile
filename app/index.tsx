@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -6,39 +6,38 @@ import {
   TouchableOpacity,
   StyleSheet,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
-import { CommandListScreenNavigationProp } from "../types"; // Import the correct type
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { CommandListScreenNavigationProp } from "@/types";
 
 export default function CommandListScreen() {
   const [commands, setCommands] = useState<any[]>([]);
-  const navigation = useNavigation<CommandListScreenNavigationProp>(); // Use typed navigation
+  const navigation = useNavigation<CommandListScreenNavigationProp>();
 
-  useEffect(() => {
-    const socket = new WebSocket("ws://10.0.2.2:8000/ws/commands/");
+  useFocusEffect(
+    useCallback(() => {
+      // Refetch the commands whenever this screen is focused
+      const socket = new WebSocket("ws://10.0.2.2:8000/ws/commands/");
 
-    socket.addEventListener("open", () => {
-      console.log("WebSocket connection established");
-    });
+      socket.addEventListener("open", () => {
+        console.log("WebSocket connection established");
+      });
 
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      if (data && Array.isArray(data.commands)) {
-        setCommands(data.commands);
-      }
-    });
+      socket.addEventListener("message", (event) => {
+        const data = JSON.parse(event.data);
+        if (data && Array.isArray(data.commands)) {
+          setCommands(data.commands);
+        }
+      });
 
-    socket.addEventListener("error", (error) => {
-      console.error("WebSocket Error: ", error);
-    });
+      socket.addEventListener("close", () => {
+        console.log("WebSocket connection closed");
+      });
 
-    socket.addEventListener("close", () => {
-      console.log("WebSocket connection closed");
-    });
-
-    return () => {
-      socket.close();
-    };
-  }, []);
+      return () => {
+        socket.close(); // Clean up the WebSocket connection when the component unmounts
+      };
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
