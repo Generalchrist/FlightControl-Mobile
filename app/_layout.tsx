@@ -26,7 +26,8 @@ export default function RootLayout() {
   return (
     <>
       <Stack>
-        <Stack.Screen name="index" options={{ title: "Commands" }} />
+        <Stack.Screen name="index" options={{ title: "Enter Pilot Id" }} />
+        <Stack.Screen name="CommandList" options={{ title: "Commands" }} />
         <Stack.Screen
           name="CommandDetail"
           options={{ title: "Command Detail" }}

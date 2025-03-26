@@ -1,88 +1,84 @@
-import React, { useCallback, useState } from "react";
+import { useNavigation } from "@react-navigation/native";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  StyleSheet,
+  TextInput,
+  Image,
+  Button,
   View,
   Text,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
+  Alert,
 } from "react-native";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import { CommandListScreenNavigationProp } from "@/types";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+export default function index() {
+  const ws = useRef(new WebSocket("ws://10.0.2.2:8000/ws/commands/")).current;
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [pilotId, setPilotId] = useState("");
+  const navigation = useNavigation<any>();
 
-export default function CommandListScreen() {
-  const [commands, setCommands] = useState<any[]>([]);
-  const navigation = useNavigation<CommandListScreenNavigationProp>();
+  useEffect(() => {
+    ws.onopen = () => console.log("ws opened");
+    ws.onclose = () => console.log("ws closed");
 
-  useFocusEffect(
-    useCallback(() => {
-      // Refetch the commands whenever this screen is focused
-      const socket = new WebSocket("ws://10.0.2.2:8000/ws/commands/");
+    setSocket(ws);
 
-      socket.addEventListener("open", () => {
-        console.log("WebSocket connection established");
+    return () => {
+      ws.close();
+    };
+  }, []);
+
+  const handleResponse = () => {
+    console.log(Number(pilotId));
+    if (!!Number(pilotId) || Number(pilotId) == 0) {
+      navigation.navigate("CommandList", {
+        pilot_id: pilotId,
+        socket: socket,
+        navigation: navigation,
       });
-
-      socket.addEventListener("message", (event) => {
-        const data = JSON.parse(event.data);
-        if (data && Array.isArray(data.commands)) {
-          setCommands(data.commands);
-        }
-      });
-
-      socket.addEventListener("close", () => {
-        console.log("WebSocket connection closed");
-      });
-
-      return () => {
-        socket.close(); // Clean up the WebSocket connection when the component unmounts
-      };
-    }, [])
-  );
+    } else {
+      Alert.alert("Validation Error", "Please enter a valid number", [
+        { text: "OK", onPress: () => console.log("OK Pressed") },
+      ]);
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Assigned Commands</Text>
-      <FlatList
-        data={commands}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.commandItem}
-            onPress={() =>
-              navigation.navigate("CommandDetail", {
-                id: item.id,
-                pilot_id: item.pilot_id,
-                plane_id: item.plane_id,
-                status: item.status,
-                message: item.message,
-                location: item.location,
-                created_at: item.created_at,
-              })
-            }
-          >
-            <Text style={styles.commandText}>Command ID: {item.id}</Text>
-            <Text style={styles.commandText}>Pilot ID: {item.pilot_id}</Text>
-            <Text style={styles.commandText}>Status: {item.status}</Text>
-            <Text style={styles.commandText}>
-              Command Time: {item.created_at}
-            </Text>
-            <Text style={styles.commandText}>Message: {item.message}</Text>
-          </TouchableOpacity>
-        )}
-      />
-    </View>
+    <SafeAreaProvider>
+      <SafeAreaView>
+        <Image
+          source={{ uri: "https://i.ytimg.com/vi/rbZoV6X3Z_Y/sddefault.jpg" }}
+          style={{ width: 400, height: 400 }}
+        />
+        <Text style={styles.title}>
+          Enter requested pilot id
+          {"\n"}
+          For all commands please just press the button
+        </Text>
+        <TextInput
+          style={styles.input}
+          onChangeText={setPilotId}
+          value={pilotId}
+        />
+        <View style={styles.button}>
+          <Button title="See Commands" onPress={() => handleResponse()} />
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
-
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#f5f5f5" },
-  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
-  commandItem: {
-    padding: 15,
-    backgroundColor: "#ffffff",
-    marginVertical: 8,
-    borderRadius: 8,
-    elevation: 2,
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
-  commandText: { fontSize: 16 },
+  button: {
+    margin: 12,
+  },
+  title: {
+    textAlign: "center",
+    marginVertical: 8,
+    marginTop: 50,
+  },
 });

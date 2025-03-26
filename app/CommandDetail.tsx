@@ -1,40 +1,13 @@
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useRef } from "react";
 import { View, Text, StyleSheet, Button } from "react-native";
 import MapView, { Marker } from "react-native-maps";
 
 const CommandDetailScreen: FC = () => {
-  const route = useRoute();
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(true);
-
-  const { id, message, location, pilot_id, status, created_at } =
-    route.params as any;
-
-  const [socket, setSocket] = useState<WebSocket | null>(null);
-
-  useEffect(() => {
-    const newSocket = new WebSocket("ws://10.0.2.2:8000/ws/commands/");
-
-    newSocket.addEventListener("open", () => {
-      console.log("WebSocket connection established");
-      setLoading(false);
-    });
-
-    newSocket.addEventListener("error", (error) => {
-      console.error("WebSocket Error: ", error);
-    });
-
-    newSocket.addEventListener("close", () => {
-      console.log("WebSocket connection closed");
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.close(); // Close the socket when the component unmounts
-    };
-  }, []);
+  const { id, message, location, pilot_id, status, created_at, socket } =
+    useRoute().params as any;
+  const ws = useRef(null);
 
   const handleResponse = (response: "accepted" | "rejected") => {
     if (socket) {
@@ -78,16 +51,8 @@ const CommandDetailScreen: FC = () => {
       </MapView>
 
       <View style={styles.buttonsContainer}>
-        <Button
-          title="Accept"
-          onPress={() => handleResponse("accepted")}
-          disabled={loading}
-        />
-        <Button
-          title="Reject"
-          onPress={() => handleResponse("rejected")}
-          disabled={loading}
-        />
+        <Button title="Accept" onPress={() => handleResponse("accepted")} />
+        <Button title="Reject" onPress={() => handleResponse("rejected")} />
       </View>
     </View>
   );
