@@ -11,10 +11,12 @@ import {
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 export default function index() {
-  const ws = useRef(new WebSocket("ws://10.0.2.2:8000/ws/commands/")).current;
+  const ws = useRef(
+    new WebSocket(process.env.EXPO_WS_COMMAND_CONSUMER!)
+  ).current;
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [pilotId, setPilotId] = useState("");
   const navigation = useNavigation<any>();
+  let pilotId: string = "";
 
   useEffect(() => {
     ws.onopen = () => console.log("ws opened");
@@ -27,8 +29,11 @@ export default function index() {
     };
   }, []);
 
+  const handleOnChange = (e: any) => {
+    pilotId = e as string;
+  };
+
   const handleResponse = () => {
-    console.log(Number(pilotId));
     if (!!Number(pilotId) || Number(pilotId) == 0) {
       navigation.navigate("CommandList", {
         pilot_id: pilotId,
@@ -54,11 +59,7 @@ export default function index() {
           {"\n"}
           For all commands please just press the button
         </Text>
-        <TextInput
-          style={styles.input}
-          onChangeText={setPilotId}
-          value={pilotId}
-        />
+        <TextInput style={styles.input} onChangeText={handleOnChange} />
         <View style={styles.button}>
           <Button title="See Commands" onPress={() => handleResponse()} />
         </View>
