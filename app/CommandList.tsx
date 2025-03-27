@@ -10,6 +10,7 @@ import { useRoute } from "@react-navigation/native";
 
 export default function CommandListScreen() {
   const [commands, setCommands] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const { pilot_id, socket, navigation } = useRoute().params as any;
 
   useEffect(() => {
@@ -23,6 +24,7 @@ export default function CommandListScreen() {
             ? data.commands.filter((x: any) => x.pilot_id == pilot_id)
             : data.commands
         );
+        setLoading(false);
       }
     };
   }, []);
@@ -30,35 +32,41 @@ export default function CommandListScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Assigned Commands</Text>
-      <FlatList
-        data={commands}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.commandItem}
-            onPress={() =>
-              navigation.navigate("CommandDetail", {
-                id: item.id,
-                pilot_id: item.pilot_id,
-                plane_id: item.plane_id,
-                status: item.status,
-                message: item.message,
-                location: item.location,
-                created_at: item.created_at,
-                socket: socket,
-              })
-            }
-          >
-            <Text style={styles.commandText}>Command ID: {item.id}</Text>
-            <Text style={styles.commandText}>Pilot ID: {item.pilot_id}</Text>
-            <Text style={styles.commandText}>Status: {item.status}</Text>
-            <Text style={styles.commandText}>
-              Command Time: {item.created_at}
-            </Text>
-            <Text style={styles.commandText}>Message: {item.message}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      {commands.length ? (
+        <FlatList
+          data={commands}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.commandItem}
+              onPress={() =>
+                navigation.navigate("CommandDetail", {
+                  id: item.id,
+                  pilot_id: item.pilot_id,
+                  plane_id: item.plane_id,
+                  status: item.status,
+                  message: item.message,
+                  location: item.location,
+                  created_at: item.created_at,
+                  socket: socket,
+                })
+              }
+            >
+              <Text style={styles.commandText}>Command ID: {item.id}</Text>
+              <Text style={styles.commandText}>Pilot ID: {item.pilot_id}</Text>
+              <Text style={styles.commandText}>Status: {item.status}</Text>
+              <Text style={styles.commandText}>
+                Command Time: {item.created_at}
+              </Text>
+              <Text style={styles.commandText}>Message: {item.message}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : loading ? (
+        <Text>Loading...</Text>
+      ) : (
+        <Text>No Commands Found</Text>
+      )}
     </View>
   );
 }
